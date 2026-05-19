@@ -6,9 +6,23 @@ const tarjetas = [
   { id: 2, tipo: "Crédito", numero: "**** **** **** 3390", titular: "JAIR LIMAS", vence: "08/27", saldo: 2000.00, color: "from-gray-700 to-gray-900" },
 ];
 
+const limitesIniciales = [
+  { label: "Compras en línea", usado: 320, limite: 2000 },
+  { label: "Retiros cajero", usado: 400, limite: 1000 },
+  { label: "Transferencias diarias", usado: 1500, limite: 5000 },
+];
+
 export default function Tarjetas() {
   const [verNumero, setVerNumero] = useState({});
+  const [limites, setLimites] = useState(limitesIniciales);
+
   const toggle = (id) => setVerNumero((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const handleLimite = (index, nuevoLimite) => {
+    const nuevos = [...limites];
+    nuevos[index] = { ...nuevos[index], limite: Number(nuevoLimite) };
+    setLimites(nuevos);
+  };
 
   return (
     <div>
@@ -47,21 +61,22 @@ export default function Tarjetas() {
       </div>
 
       <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">Límites y consumo</h2>
-        <div className="space-y-4">
-          {[
-            { label: "Compras en línea", usado: 320, limite: 2000 },
-            { label: "Retiros cajero", usado: 400, limite: 1000 },
-            { label: "Transferencias diarias", usado: 1500, limite: 5000 },
-          ].map((item) => (
+        <h2 className="text-lg font-bold text-gray-800 mb-5">Límites y consumo</h2>
+        <div className="space-y-6 select-none">
+          {limites.map((item, index) => (
             <div key={item.label}>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-600">{item.label}</span>
-                <span className="font-semibold text-gray-800">S/ {item.usado} / S/ {item.limite}</span>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600 font-medium">{item.label}</span>
+                <span className="font-semibold text-gray-800">S/ {item.limite}</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2">
-                <div className="bg-red-600 h-2 rounded-full" style={{ width: `${(item.usado / item.limite) * 100}%` }} />
-              </div>
+              <input
+                type="range"
+                min={item.usado}
+                max={10000}
+                value={item.limite}
+                onChange={(e) => handleLimite(index, e.target.value)}
+                className="w-full accent-red-600 cursor-pointer"
+              />
             </div>
           ))}
         </div>

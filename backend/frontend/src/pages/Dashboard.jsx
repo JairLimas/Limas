@@ -1,16 +1,41 @@
 import { ArrowUpRight, ArrowDownLeft, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
-
-const movimientos = [
-  { id: 1, desc: "Transferencia recibida", monto: 1500.00, tipo: "entrada", fecha: "17 May 2026", categoria: "Transferencia" },
-  { id: 2, desc: "Pago de servicios BCP", monto: -250.00, tipo: "salida", fecha: "16 May 2026", categoria: "Servicios" },
-  { id: 3, desc: "Depósito en efectivo", monto: 3000.00, tipo: "entrada", fecha: "15 May 2026", categoria: "Depósito" },
-  { id: 4, desc: "Compra Supermercado", monto: -180.50, tipo: "salida", fecha: "14 May 2026", categoria: "Compras" },
-  { id: 5, desc: "Pago préstamo", monto: -620.00, tipo: "salida", fecha: "13 May 2026", categoria: "Préstamo" },
-];
+import { useState, useEffect } from "react";
+import { supabase } from "../supabase";
 
 export default function Dashboard() {
   const [verSaldo, setVerSaldo] = useState(true);
+  const [cuenta, setCuenta] = useState(null);
+  const [movimientos, setMovimientos] = useState([]);
+  const [todos, setTodos] = useState([]);
+
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    const { data: cuentaData } = await supabase
+      .from("cuentas")
+      .select("*")
+      .single();
+    setCuenta(cuentaData);
+
+    // Todos los movimientos para calcular totales
+    const { data: todosData } = await supabase
+      .from("movimientos")
+      .select("*");
+    setTodos(todosData || []);
+
+    // Solo los 5 más recientes para mostrar
+    const { data: movData } = await supabase
+      .from("movimientos")
+      .select("*")
+      .order("fecha", { ascending: false })
+      .limit(5);
+    setMovimientos(movData || []);
+  };
+
+  const totalEntradas = todos.filter(m => m.tipo === "entrada").reduce((a, m) => a + Number(m.monto), 0);
+  const totalSalidas = todos.filter(m => m.tipo === "salida").reduce((a, m) => a + Math.abs(Number(m.monto)), 0);
 
   return (
     <div>
@@ -24,8 +49,10 @@ export default function Dashboard() {
               {verSaldo ? <EyeOff size={18} className="text-red-200" /> : <Eye size={18} className="text-red-200" />}
             </button>
           </div>
-          <p className="text-3xl font-bold mb-1">{verSaldo ? "S/ 8,450.00" : "S/ ••••••"}</p>
-          <p className="text-red-200 text-xs">Cuenta de Ahorros • **** 4821</p>
+          <p className="text-3xl font-bold mb-1">
+            {verSaldo ? `S/ ${Number(cuenta?.saldo || 0).toLocaleString()}` : "S/ ••••••"}
+          </p>
+          <p className="text-red-200 text-xs">Cuenta {cuenta?.tipo} • **** {cuenta?.numero?.slice(-4)}</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -33,10 +60,9 @@ export default function Dashboard() {
             <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
               <ArrowDownLeft size={18} className="text-green-600" />
             </div>
-            <p className="text-gray-500 text-sm">Ingresos del mes</p>
+            <p className="text-gray-500 text-sm">Ingresos totales</p>
           </div>
-          <p className="text-2xl font-bold text-gray-800">S/ 4,500.00</p>
-          <p className="text-green-600 text-xs mt-1">+12% vs mes anterior</p>
+          <p className="text-2xl font-bold text-gray-800">S/ {totalEntradas.toFixed(2)}</p>
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -44,10 +70,9 @@ export default function Dashboard() {
             <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
               <ArrowUpRight size={18} className="text-red-600" />
             </div>
-            <p className="text-gray-500 text-sm">Gastos del mes</p>
+            <p className="text-gray-500 text-sm">Gastos totales</p>
           </div>
-          <p className="text-2xl font-bold text-gray-800">S/ 1,050.50</p>
-          <p className="text-red-600 text-xs mt-1">-5% vs mes anterior</p>
+          <p className="text-2xl font-bold text-gray-800">S/ {totalSalidas.toFixed(2)}</p>
         </div>
       </div>
 
@@ -71,7 +96,6 @@ export default function Dashboard() {
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <div className="flex justify-between items-center mb-5">
           <h2 className="text-lg font-bold text-gray-800">Movimientos Recientes</h2>
-          <button className="text-red-600 text-sm font-medium hover:underline">Ver todos</button>
         </div>
         <div className="space-y-4">
           {movimientos.map((m) => (
@@ -81,12 +105,12 @@ export default function Dashboard() {
                   {m.tipo === "entrada" ? <ArrowDownLeft size={18} className="text-green-600" /> : <ArrowUpRight size={18} className="text-red-600" />}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-800">{m.desc}</p>
-                  <p className="text-xs text-gray-400">{m.fecha} • {m.categoria}</p>
+                  <p className="text-sm font-semibold text-gray-800">{m.descripcion}</p>
+                  <p className="text-xs text-gray-400">{new Date(m.fecha).toLocaleDateString()} • {m.categoria}</p>
                 </div>
               </div>
               <p className={`font-bold text-sm ${m.tipo === "entrada" ? "text-green-600" : "text-red-600"}`}>
-                {m.tipo === "entrada" ? "+" : ""}S/ {Math.abs(m.monto).toFixed(2)}
+                {m.tipo === "entrada" ? "+" : ""}S/ {Math.abs(Number(m.monto)).toFixed(2)}
               </p>
             </div>
           ))}

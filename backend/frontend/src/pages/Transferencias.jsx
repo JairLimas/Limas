@@ -1,11 +1,43 @@
 import { useState } from "react";
 import { Send, CheckCircle } from "lucide-react";
+import { supabase } from "../supabase";
 
 export default function Transferencias() {
   const [paso, setPaso] = useState(1);
   const [form, setForm] = useState({ banco: "", cuenta: "", monto: "", descripcion: "" });
+  const [cargando, setCargando] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleEnviar = async () => {
+    setCargando(true);
+
+    // Obtener cuenta del usuario
+    const { data: cuenta } = await supabase
+      .from("cuentas")
+      .select("*")
+      .single();
+
+    if (cuenta) {
+      // Insertar movimiento de salida
+      await supabase.from("movimientos").insert({
+        cuenta_id: cuenta.id,
+        descripcion: `Transferencia a cuenta ${form.cuenta} - ${form.banco}`,
+        monto: -parseFloat(form.monto),
+        tipo: "salida",
+        categoria: "Transferencia",
+      });
+
+      // Actualizar saldo
+      await supabase
+        .from("cuentas")
+        .update({ saldo: cuenta.saldo - parseFloat(form.monto) })
+        .eq("id", cuenta.id);
+    }
+
+    setCargando(false);
+    setPaso(3);
+  };
 
   return (
     <div>
@@ -73,8 +105,8 @@ export default function Transferencias() {
             </div>
             <div className="flex gap-3">
               <button onClick={() => setPaso(1)} className="flex-1 border border-gray-300 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Atrás</button>
-              <button onClick={() => setPaso(3)} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2">
-                <Send size={16} /> Enviar
+              <button onClick={handleEnviar} disabled={cargando} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2">
+                <Send size={16} /> {cargando ? "Enviando..." : "Enviar"}
               </button>
             </div>
           </div>

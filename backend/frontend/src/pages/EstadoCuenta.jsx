@@ -1,28 +1,38 @@
 import { ArrowUpRight, ArrowDownLeft, Download } from "lucide-react";
-import { useState } from "react";
-
-const todos = [
-  { id: 1, desc: "Transferencia recibida - Carlos M.", monto: 1500.00, tipo: "entrada", fecha: "17 May 2026", categoria: "Transferencia" },
-  { id: 2, desc: "Pago de servicios BCP", monto: -250.00, tipo: "salida", fecha: "16 May 2026", categoria: "Servicios" },
-  { id: 3, desc: "Depósito en efectivo", monto: 3000.00, tipo: "entrada", fecha: "15 May 2026", categoria: "Depósito" },
-  { id: 4, desc: "Compra Supermercado Plaza Vea", monto: -180.50, tipo: "salida", fecha: "14 May 2026", categoria: "Compras" },
-  { id: 5, desc: "Pago préstamo personal", monto: -620.00, tipo: "salida", fecha: "13 May 2026", categoria: "Préstamo" },
-  { id: 6, desc: "Transferencia recibida - Empresa XYZ", monto: 2800.00, tipo: "entrada", fecha: "10 May 2026", categoria: "Transferencia" },
-  { id: 7, desc: "Retiro cajero automático", monto: -400.00, tipo: "salida", fecha: "09 May 2026", categoria: "Retiro" },
-  { id: 8, desc: "Pago electricidad ELSE", monto: -95.00, tipo: "salida", fecha: "08 May 2026", categoria: "Servicios" },
-];
+import { useState, useEffect } from "react";
+import { supabase } from "../supabase";
 
 export default function EstadoCuenta() {
   const [filtro, setFiltro] = useState("todos");
+  const [movimientos, setMovimientos] = useState([]);
+  const [saldo, setSaldo] = useState(0);
 
-  const filtrados = todos.filter((m) => {
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
+  const cargarDatos = async () => {
+    const { data: cuenta } = await supabase
+      .from("cuentas")
+      .select("*")
+      .single();
+    setSaldo(cuenta?.saldo || 0);
+
+    const { data: movData } = await supabase
+      .from("movimientos")
+      .select("*")
+      .order("fecha", { ascending: false });
+    setMovimientos(movData || []);
+  };
+
+  const filtrados = movimientos.filter((m) => {
     if (filtro === "entrada") return m.tipo === "entrada";
     if (filtro === "salida") return m.tipo === "salida";
     return true;
   });
 
-  const totalEntradas = todos.filter(m => m.tipo === "entrada").reduce((a, m) => a + m.monto, 0);
-  const totalSalidas = todos.filter(m => m.tipo === "salida").reduce((a, m) => a + Math.abs(m.monto), 0);
+  const totalEntradas = movimientos.filter(m => m.tipo === "entrada").reduce((a, m) => a + m.monto, 0);
+  const totalSalidas = movimientos.filter(m => m.tipo === "salida").reduce((a, m) => a + Math.abs(m.monto), 0);
 
   return (
     <div>
@@ -36,7 +46,7 @@ export default function EstadoCuenta() {
       <div className="grid grid-cols-3 gap-5 mb-6">
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <p className="text-gray-500 text-sm mb-1">Saldo actual</p>
-          <p className="text-2xl font-bold text-gray-800">S/ 8,450.00</p>
+          <p className="text-2xl font-bold text-gray-800">S/ {saldo.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <p className="text-gray-500 text-sm mb-1">Total ingresos</p>
@@ -66,8 +76,8 @@ export default function EstadoCuenta() {
                   {m.tipo === "entrada" ? <ArrowDownLeft size={18} className="text-green-600" /> : <ArrowUpRight size={18} className="text-red-600" />}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-800">{m.desc}</p>
-                  <p className="text-xs text-gray-400">{m.fecha} • {m.categoria}</p>
+                  <p className="text-sm font-semibold text-gray-800">{m.descripcion}</p>
+                  <p className="text-xs text-gray-400">{new Date(m.fecha).toLocaleDateString("es-PE", { day: "numeric", month: "short", year: "numeric" })} • {m.categoria}</p>
                 </div>
               </div>
               <p className={`font-bold text-sm ${m.tipo === "entrada" ? "text-green-600" : "text-red-600"}`}>
