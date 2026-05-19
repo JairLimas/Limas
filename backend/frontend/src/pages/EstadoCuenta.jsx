@@ -1,4 +1,4 @@
-import { ArrowUpRight, ArrowDownLeft, Download } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 
@@ -36,11 +36,8 @@ export default function EstadoCuenta() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Estado de Cuenta</h1>
-        <button className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
-          <Download size={16} /> Descargar PDF
-        </button>
       </div>
 
       <div className="grid grid-cols-3 gap-5 mb-6">

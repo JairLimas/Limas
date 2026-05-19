@@ -1,9 +1,10 @@
 import { CreditCard, Lock, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../supabase";
 
-const tarjetas = [
-  { id: 1, tipo: "Débito", numero: "**** **** **** 4821", titular: "JAIR LIMAS", vence: "12/28", saldo: 8450.00, color: "from-red-600 to-red-800" },
-  { id: 2, tipo: "Crédito", numero: "**** **** **** 3390", titular: "JAIR LIMAS", vence: "08/27", saldo: 2000.00, color: "from-gray-700 to-gray-900" },
+const tarjetasBase = [
+  { id: 1, tipo: "Débito", numero: "**** **** **** 4821", numeroCompleto: "4821 0000 0000 1234", titular: "JAIR LIMAS", vence: "12/28", color: "from-red-600 to-red-800" },
+  { id: 2, tipo: "Crédito", numero: "**** **** **** 3390", numeroCompleto: "3390 0000 0000 5678", titular: "JAIR LIMAS", vence: "08/27", color: "from-gray-700 to-gray-900" },
 ];
 
 const limitesIniciales = [
@@ -15,6 +16,18 @@ const limitesIniciales = [
 export default function Tarjetas() {
   const [verNumero, setVerNumero] = useState({});
   const [limites, setLimites] = useState(limitesIniciales);
+  const [saldo, setSaldo] = useState(0);
+
+  useEffect(() => {
+    const cargarSaldo = async () => {
+      const { data: cuenta } = await supabase
+        .from("cuentas")
+        .select("saldo")
+        .single();
+      if (cuenta) setSaldo(cuenta.saldo);
+    };
+    cargarSaldo();
+  }, []);
 
   const toggle = (id) => setVerNumero((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -23,6 +36,11 @@ export default function Tarjetas() {
     nuevos[index] = { ...nuevos[index], limite: Number(nuevoLimite) };
     setLimites(nuevos);
   };
+
+  const tarjetas = tarjetasBase.map((t) => ({
+    ...t,
+    saldo: t.tipo === "Débito" ? saldo : 2000.00,
+  }));
 
   return (
     <div>
@@ -40,11 +58,13 @@ export default function Tarjetas() {
                 </div>
                 <CreditCard size={28} className="opacity-80" />
               </div>
-              <p className="text-lg font-mono tracking-widest mb-4">{t.numero}</p>
+              <p className="text-lg font-mono tracking-widest mb-4">
+                {verNumero[t.id] ? t.numeroCompleto : t.numero}
+              </p>
               <div className="flex justify-between">
                 <div><p className="text-xs opacity-60">Titular</p><p className="text-sm font-semibold">{t.titular}</p></div>
                 <div><p className="text-xs opacity-60">Vence</p><p className="text-sm font-semibold">{t.vence}</p></div>
-                <div><p className="text-xs opacity-60">Saldo</p><p className="text-sm font-semibold">S/ {t.saldo.toLocaleString()}</p></div>
+                <div><p className="text-xs opacity-60">Saldo</p><p className="text-sm font-semibold">S/ {Number(t.saldo).toLocaleString()}</p></div>
               </div>
             </div>
             <div className="bg-white rounded-2xl p-4 shadow-sm flex gap-3">
