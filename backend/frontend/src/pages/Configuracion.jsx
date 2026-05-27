@@ -1,8 +1,75 @@
-import { User, Lock, Bell, Shield, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { User, Lock, Bell, Shield, ChevronRight, Pencil, Check, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "../supabase";
 
 export default function Configuracion() {
   const [notif, setNotif] = useState({ transferencias: true, pagos: true, promociones: false });
+  const [datos, setDatos] = useState({ nombre: "", dni: "", email: "", telefono: "" });
+  const [editando, setEditando] = useState(null);
+  const [valorTemp, setValorTemp] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [usuarioId, setUsuarioId] = useState(null);
+
+  useEffect(() => {
+    const cargarUsuario = async () => {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("id, nombre, dni, email, telefono")
+        .single();
+
+      if (error) { console.error("Error:", error); return; }
+
+      if (data) {
+        setUsuarioId(data.id);
+        setDatos({
+          nombre:   data.nombre   ?? "",
+          dni:      data.dni      ?? "",
+          email:    data.email    ?? "",
+          telefono: data.telefono ?? "",
+        });
+      }
+    };
+    cargarUsuario();
+  }, []);
+
+  const iniciarEdicion = (campo, valorActual) => {
+    setEditando(campo);
+    setValorTemp(valorActual);
+  };
+
+  const cancelarEdicion = () => {
+    setEditando(null);
+    setValorTemp("");
+  };
+
+  const guardarCambio = async (campo) => {
+    if (!valorTemp.trim()) return;
+    setGuardando(true);
+
+    const { error } = await supabase
+      .from("usuarios")
+      .update({ [campo]: valorTemp.trim() })
+      .eq("id", usuarioId);
+
+    if (!error) {
+      setDatos((prev) => ({ ...prev, [campo]: valorTemp.trim() }));
+      setEditando(null);
+      setValorTemp("");
+    } else {
+      console.error("Error guardando:", error);
+      alert("Error al guardar el cambio. Intenta nuevamente.");
+    }
+
+    setGuardando(false);
+  };
+
+  // 👇 "correo" → "email" para que coincida con Supabase
+  const campos = [
+    { key: "nombre",   label: "Nombre completo",   tipo: "text"  },
+    { key: "dni",      label: "DNI",                tipo: "text"  },
+    { key: "email",    label: "Correo electrónico", tipo: "email" },
+    { key: "telefono", label: "Teléfono",            tipo: "tel"   },
+  ];
 
   return (
     <div>
@@ -10,29 +77,65 @@ export default function Configuracion() {
 
       <div className="max-w-2xl space-y-5">
 
+        {/* Datos personales */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
             <User size={20} className="text-red-600" />
             <h2 className="text-lg font-bold text-gray-800">Datos personales</h2>
           </div>
           <div className="space-y-4">
-            {[
-              { label: "Nombre completo", value: "Jair Limas" },
-              { label: "DNI", value: "12345678" },
-              { label: "Correo electrónico", value: "jair@email.com" },
-              { label: "Teléfono", value: "+51 987 654 321" },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                <div>
-                  <p className="text-xs text-gray-400">{label}</p>
-                  <p className="text-sm font-semibold text-gray-800">{value}</p>
+            {campos.map(({ key, label, tipo }) => (
+              <div key={key} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                <div className="flex-1 mr-4">
+                  <p className="text-xs text-gray-400 mb-1">{label}</p>
+                  {editando === key ? (
+                    <input
+                      type={tipo}
+                      value={valorTemp}
+                      onChange={(e) => setValorTemp(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") guardarCambio(key);
+                        if (e.key === "Escape") cancelarEdicion();
+                      }}
+                      autoFocus
+                      className="border border-red-400 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-red-200 w-full"
+                    />
+                  ) : (
+                    <p className="text-sm font-semibold text-gray-800">{datos[key] || "—"}</p>
+                  )}
                 </div>
-                <button className="text-red-600 text-xs font-semibold hover:underline">Editar</button>
+
+                {editando === key ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => guardarCambio(key)}
+                      disabled={guardando}
+                      className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-50"
+                    >
+                      <Check size={13} />
+                      {guardando ? "..." : "Guardar"}
+                    </button>
+                    <button
+                      onClick={cancelarEdicion}
+                      className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition"
+                    >
+                      <X size={13} /> Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => iniciarEdicion(key, datos[key])}
+                    className="flex items-center gap-1 text-red-600 text-xs font-semibold hover:underline"
+                  >
+                    <Pencil size={13} /> Editar
+                  </button>
+                )}
               </div>
             ))}
           </div>
         </div>
 
+        {/* Seguridad */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
             <Lock size={20} className="text-red-600" />
@@ -48,6 +151,7 @@ export default function Configuracion() {
           </div>
         </div>
 
+        {/* Notificaciones */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
             <Bell size={20} className="text-red-600" />
@@ -56,8 +160,8 @@ export default function Configuracion() {
           <div className="space-y-4">
             {[
               { key: "transferencias", label: "Transferencias realizadas" },
-              { key: "pagos", label: "Pagos de servicios" },
-              { key: "promociones", label: "Promociones y ofertas" },
+              { key: "pagos",          label: "Pagos de servicios"        },
+              { key: "promociones",    label: "Promociones y ofertas"     },
             ].map(({ key, label }) => (
               <div key={key} className="flex justify-between items-center">
                 <span className="text-sm text-gray-700">{label}</span>
@@ -72,6 +176,7 @@ export default function Configuracion() {
           </div>
         </div>
 
+        {/* Sesión segura */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
             <Shield size={20} className="text-green-600" />
