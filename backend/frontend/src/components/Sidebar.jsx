@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ArrowLeftRight, FileText,
-  CreditCard, Settings, LogOut
+  CreditCard, Settings, LogOut, Landmark
 } from "lucide-react";
 
 const links = [
@@ -9,6 +9,7 @@ const links = [
   { to: "/app/transferencias", icon: ArrowLeftRight, label: "Transferencias" },
   { to: "/app/estado-cuenta", icon: FileText, label: "Estado de Cuenta" },
   { to: "/app/tarjetas", icon: CreditCard, label: "Mis Tarjetas" },
+  { to: "/app/prestamos", icon: Landmark, label: "Préstamos" },
   { to: "/app/configuracion", icon: Settings, label: "Configuración" },
 ];
 

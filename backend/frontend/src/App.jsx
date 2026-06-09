@@ -6,6 +6,7 @@ import Transferencias from "./pages/Transferencias";
 import EstadoCuenta from "./pages/EstadoCuenta";
 import Tarjetas from "./pages/Tarjetas";
 import Configuracion from "./pages/Configuracion";
+import Prestamos from "./pages/Prestamos";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="transferencias" element={<Transferencias />} />
           <Route path="estado-cuenta" element={<EstadoCuenta />} />
           <Route path="tarjetas" element={<Tarjetas />} />
+          <Route path="prestamos" element={<Prestamos />} />
           <Route path="configuracion" element={<Configuracion />} />
         </Route>
       </Routes>

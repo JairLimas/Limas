@@ -1,5 +1,6 @@
 import { ArrowUpRight, ArrowDownLeft, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 
 export default function Dashboard() {
@@ -7,6 +8,7 @@ export default function Dashboard() {
   const [cuenta, setCuenta] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
   const [todos, setTodos] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     cargarDatos();
@@ -19,13 +21,11 @@ export default function Dashboard() {
       .single();
     setCuenta(cuentaData);
 
-    // Todos los movimientos para calcular totales
     const { data: todosData } = await supabase
       .from("movimientos")
       .select("*");
     setTodos(todosData || []);
 
-    // Solo los 5 más recientes para mostrar
     const { data: movData } = await supabase
       .from("movimientos")
       .select("*")
@@ -78,14 +78,16 @@ export default function Dashboard() {
 
       <div className="bg-white rounded-2xl p-6 shadow-sm mb-8">
         <h2 className="text-lg font-bold text-gray-800 mb-4">Accesos Rápidos</h2>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {[
-            { label: "Transferir", icon: "💸", color: "bg-blue-50 text-blue-600" },
-            { label: "Pagar Servicios", icon: "🧾", color: "bg-yellow-50 text-yellow-600" },
-            { label: "Recargar", icon: "📱", color: "bg-green-50 text-green-600" },
-            { label: "Préstamos", icon: "🏦", color: "bg-purple-50 text-purple-600" },
+            { label: "Transferir", icon: "💸", color: "bg-blue-50 text-blue-600", ruta: "/app/transferencias" },
+            { label: "Préstamos", icon: "🏦", color: "bg-purple-50 text-purple-600", ruta: "/app/prestamos" },
           ].map((item) => (
-            <button key={item.label} className={`${item.color} rounded-xl p-4 flex flex-col items-center gap-2 hover:opacity-80 transition`}>
+            <button
+              key={item.label}
+              onClick={() => navigate(item.ruta)}
+              className={`${item.color} rounded-xl p-4 flex flex-col items-center gap-2 hover:opacity-80 transition`}
+            >
               <span className="text-2xl">{item.icon}</span>
               <span className="text-sm font-medium">{item.label}</span>
             </button>
