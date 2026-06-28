@@ -9,7 +9,6 @@ import Configuracion from "./pages/Configuracion";
 import Prestamos from "./pages/Prestamos";
 import Creditos from "./pages/Creditos";
 
-// Cliente autenticado si tiene usuario_id en localStorage
 const isClienteAuth = () => !!localStorage.getItem("usuario_id");
 
 const PrivateRoute = ({ children }) => {
