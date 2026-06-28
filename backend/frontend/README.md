@@ -1,16 +1,96 @@
-# React + Vite
+# Caja Cusco — Homebanking (Banca por Internet)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema de banca digital para clientes de Caja Cusco. Permite consultar saldos, realizar transferencias, gestionar tarjetas, solicitar préstamos y créditos.
 
-Currently, two official plugins are available:
+## Stack tecnológico
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend:** React 18 + Vite
+- **Estilos:** Tailwind CSS
+- **Base de datos:** Supabase (PostgreSQL)
+- **Autenticación:** Sesión por localStorage (número de tarjeta + DNI + clave)
 
-## React Compiler
+## Estructura del proyecto
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+src/
+├── components/
+│   ├── Layout.jsx          # Estructura principal con sidebar
+│   └── Sidebar.jsx         # Navegación lateral
+├── pages/
+│   ├── Login.jsx           # Autenticación con captcha
+│   ├── Dashboard.jsx       # Resumen de cuenta y saldo
+│   ├── Transferencias.jsx  # Transferencias entre cuentas
+│   ├── EstadoCuenta.jsx    # Historial de movimientos
+│   ├── Tarjetas.jsx        # Gestión de tarjetas débito
+│   ├── Prestamos.jsx       # Solicitud de préstamos
+│   ├── Creditos.jsx        # Solicitud de créditos
+│   └── Configuracion.jsx   # Datos del perfil
+├── supabase.js             # Cliente Supabase
+└── App.jsx                 # Rutas protegidas
+```
 
-## Expanding the ESLint configuration
+## Instalación y ejecución
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+# Instalar dependencias
+npm install
+
+# Ejecutar en desarrollo
+npm run dev
+
+# Construir para producción
+npm run build
+```
+
+## Variables de entorno
+
+Crear archivo `.env` en la raíz:
+
+```
+VITE_SUPABASE_URL=https://ykupntvwlltppfyjyxwh.supabase.co
+VITE_SUPABASE_ANON_KEY=tu_anon_key
+```
+
+## Credenciales de prueba
+
+| Usuario     | Tarjeta              | DNI       | Clave  |
+|-------------|----------------------|-----------|--------|
+| cli000001   | 4821000000001234     | 123456789 | 300806 |
+| cli000002   | 1111111111111111     | 111111    | 300806 |
+| cli000003   | 4821000000000001     | 40000001  | 123456 |
+| cli000004   | 4821000000000002     | 40000002  | 123456 |
+
+## Tablas Supabase utilizadas
+
+| Tabla        | Descripción                        |
+|--------------|------------------------------------|
+| `usuarios`   | Datos del cliente (DNI, clave)     |
+| `cuentas`    | Cuentas de ahorro por usuario      |
+| `movimientos`| Historial de transacciones         |
+| `tarjetas`   | Tarjetas débito asociadas          |
+| `prestamos`  | Solicitudes de préstamo            |
+| `creditos`   | Solicitudes de crédito             |
+
+## Flujo principal
+
+```
+Login (tarjeta + DNI + clave + captcha)
+    ↓
+Dashboard (saldo, movimientos recientes)
+    ↓
+Solicitar Préstamo/Crédito
+    ↓
+[Core Financiero Admin aprueba]
+    ↓
+Desembolso → saldo actualizado en Dashboard
+```
+
+## Control de acceso
+
+- Rutas `/app/*` protegidas con `PrivateRoute`
+- Sin sesión activa → redirige a `/` (Login)
+- Sesión almacenada: `usuario_id`, `cuenta_id`, `usuario_nombre`
+
+## Integración con Core Financiero
+
+El homebanking comparte la misma base de datos Supabase con el Core Financiero (Admin). Las solicitudes de préstamo/crédito creadas desde el homebanking aparecen automáticamente en la bandeja del admin, y los desembolsos se reflejan en el saldo del cliente en tiempo real.
