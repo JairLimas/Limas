@@ -37,8 +37,8 @@ export default function Login() {
 
     const { data: cuenta } = await supabase
       .from("cuentas")
-      .select("*, usuarios(*)")
-      .eq("tarjeta", tarjeta)
+      .select("*")
+      .eq("numero", tarjeta)
       .single();
 
     if (!cuenta) {
@@ -48,8 +48,13 @@ export default function Login() {
       return;
     }
 
-    const usuario = cuenta.usuarios;
-    if (usuario.dni !== documento) {
+    const { data: usuario } = await supabase
+      .from("usuarios")
+      .select("*")
+      .eq("id", cuenta.usuario_id)
+      .single();
+
+    if (!usuario || usuario.dni !== documento) {
       setError("Documento de identidad incorrecto");
       setCargando(false);
       refrescarCaptcha();
@@ -62,6 +67,11 @@ export default function Login() {
       refrescarCaptcha();
       return;
     }
+
+    // Guardar sesión del usuario logueado
+    localStorage.setItem("usuario_id", usuario.id);
+    localStorage.setItem("cuenta_id", cuenta.id);
+    localStorage.setItem("usuario_nombre", usuario.nombre);
 
     setCargando(false);
     navigate("/app/dashboard");

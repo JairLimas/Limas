@@ -15,14 +15,17 @@ export default function Transferencias() {
 
   useEffect(() => {
     const verificarBloqueo = async () => {
+      const usuarioId = localStorage.getItem("usuario_id");
+      if (!usuarioId) return;
+
       const { data } = await supabase
         .from("tarjetas")
         .select("id, bloqueada")
+        .eq("usuario_id", usuarioId)
         .eq("tipo", "Débito")
         .single();
 
       if (data) {
-        // Verificar localStorage también
         const bloqueosGuardados = JSON.parse(
           localStorage.getItem("tarjetas_bloqueadas") || "{}"
         );
@@ -40,9 +43,12 @@ export default function Transferencias() {
   const handleEnviar = async () => {
     setCargando(true);
 
+    const cuentaId = localStorage.getItem("cuenta_id");
+
     const { data: cuenta } = await supabase
       .from("cuentas")
       .select("*")
+      .eq("id", cuentaId)
       .single();
 
     if (cuenta) {
@@ -68,7 +74,6 @@ export default function Transferencias() {
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Transferencias</h1>
 
-      {/* Banner tarjeta bloqueada */}
       {tarjetaBloqueada && (
         <div className="max-w-xl mb-6 bg-red-50 border border-red-300 rounded-2xl p-4 flex items-start gap-3">
           <AlertTriangle size={20} className="text-red-600 mt-0.5 shrink-0" />
@@ -84,7 +89,6 @@ export default function Transferencias() {
       )}
 
       <div className="max-w-xl">
-        {/* Pasos */}
         <div className="flex items-center gap-3 mb-8">
           {["Datos", "Confirmar", "Listo"].map((label, i) => (
             <div key={label} className="flex items-center gap-2">

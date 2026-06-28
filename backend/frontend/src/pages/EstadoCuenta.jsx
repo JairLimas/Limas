@@ -12,15 +12,20 @@ export default function EstadoCuenta() {
   }, []);
 
   const cargarDatos = async () => {
+    const cuentaId = localStorage.getItem("cuenta_id");
+    if (!cuentaId) return;
+
     const { data: cuenta } = await supabase
       .from("cuentas")
       .select("*")
+      .eq("id", cuentaId)
       .single();
     setSaldo(cuenta?.saldo || 0);
 
     const { data: movData } = await supabase
       .from("movimientos")
       .select("*")
+      .eq("cuenta_id", cuentaId)
       .order("fecha", { ascending: false });
     setMovimientos(movData || []);
   };

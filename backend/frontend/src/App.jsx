@@ -7,6 +7,7 @@ import EstadoCuenta from "./pages/EstadoCuenta";
 import Tarjetas from "./pages/Tarjetas";
 import Configuracion from "./pages/Configuracion";
 import Prestamos from "./pages/Prestamos";
+import Creditos from "./pages/Creditos";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="estado-cuenta" element={<EstadoCuenta />} />
           <Route path="tarjetas" element={<Tarjetas />} />
           <Route path="prestamos" element={<Prestamos />} />
+          <Route path="creditos" element={<Creditos />} />
           <Route path="configuracion" element={<Configuracion />} />
         </Route>
       </Routes>

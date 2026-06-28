@@ -10,7 +10,6 @@ export default function Configuracion() {
   const [guardando, setGuardando] = useState(false);
   const [usuarioId, setUsuarioId] = useState(null);
 
-  // Modal cambiar clave
   const [modalClave, setModalClave] = useState(false);
   const [claveActual, setClaveActual] = useState("");
   const [claveNueva, setClaveNueva] = useState("");
@@ -24,9 +23,13 @@ export default function Configuracion() {
 
   useEffect(() => {
     const cargarUsuario = async () => {
+      const uid = localStorage.getItem("usuario_id");
+      if (!uid) return;
+
       const { data, error } = await supabase
         .from("usuarios")
         .select("id, nombre, dni, email, telefono")
+        .eq("id", uid)
         .single();
 
       if (error) { console.error("Error:", error); return; }
@@ -65,6 +68,9 @@ export default function Configuracion() {
 
     if (!error) {
       setDatos((prev) => ({ ...prev, [campo]: valorTemp.trim() }));
+      if (campo === "nombre") {
+        localStorage.setItem("usuario_nombre", valorTemp.trim());
+      }
       setEditando(null);
       setValorTemp("");
     } else {
@@ -92,7 +98,6 @@ export default function Configuracion() {
   const handleCambiarClave = async () => {
     setErrorClave("");
 
-    // Validaciones
     if (!claveActual || !claveNueva || !claveConfirmar) {
       setErrorClave("Completa todos los campos.");
       return;
@@ -112,7 +117,6 @@ export default function Configuracion() {
 
     setGuardandoClave(true);
 
-    // Verificar clave actual en Supabase
     const { data: usuario, error } = await supabase
       .from("usuarios")
       .select("clave")
@@ -131,7 +135,6 @@ export default function Configuracion() {
       return;
     }
 
-    // Actualizar clave en Supabase
     const { error: errorUpdate } = await supabase
       .from("usuarios")
       .update({ clave: claveNueva })
@@ -146,7 +149,6 @@ export default function Configuracion() {
     setGuardandoClave(false);
     setExitoClave(true);
 
-    // Cerrar modal después de 2 segundos
     setTimeout(() => {
       cerrarModalClave();
     }, 2000);
@@ -165,7 +167,6 @@ export default function Configuracion() {
 
       <div className="max-w-2xl space-y-5">
 
-        {/* Datos personales */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
             <User size={20} className="text-red-600" />
@@ -223,7 +224,6 @@ export default function Configuracion() {
           </div>
         </div>
 
-        {/* Seguridad */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
             <Lock size={20} className="text-red-600" />
@@ -240,7 +240,6 @@ export default function Configuracion() {
           </div>
         </div>
 
-        {/* Notificaciones */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
             <Bell size={20} className="text-red-600" />
@@ -265,7 +264,6 @@ export default function Configuracion() {
           </div>
         </div>
 
-        {/* Sesión segura */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
             <Shield size={20} className="text-green-600" />
@@ -276,12 +274,10 @@ export default function Configuracion() {
 
       </div>
 
-      {/* Modal cambiar clave */}
       {modalClave && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
 
-            {/* Header */}
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
@@ -294,7 +290,6 @@ export default function Configuracion() {
               </button>
             </div>
 
-            {/* Éxito */}
             {exitoClave ? (
               <div className="text-center py-6">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -305,7 +300,6 @@ export default function Configuracion() {
               </div>
             ) : (
               <>
-                {/* Error */}
                 {errorClave && (
                   <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl mb-4">
                     {errorClave}
@@ -313,7 +307,6 @@ export default function Configuracion() {
                 )}
 
                 <div className="space-y-4 mb-6">
-                  {/* Clave actual */}
                   <div>
                     <label className="text-sm font-semibold text-gray-700 block mb-2">
                       Clave actual
@@ -334,7 +327,6 @@ export default function Configuracion() {
                     </div>
                   </div>
 
-                  {/* Clave nueva */}
                   <div>
                     <label className="text-sm font-semibold text-gray-700 block mb-2">
                       Nueva clave <span className="text-gray-400 font-normal">(6 dígitos)</span>
@@ -355,7 +347,6 @@ export default function Configuracion() {
                     </div>
                   </div>
 
-                  {/* Confirmar clave */}
                   <div>
                     <label className="text-sm font-semibold text-gray-700 block mb-2">
                       Confirmar nueva clave
@@ -377,7 +368,6 @@ export default function Configuracion() {
                   </div>
                 </div>
 
-                {/* Botones */}
                 <div className="flex gap-3">
                   <button
                     onClick={cerrarModalClave}

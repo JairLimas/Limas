@@ -21,7 +21,16 @@ export default function Tarjetas() {
 
   useEffect(() => {
     const cargarTarjetas = async () => {
-      const { data, error } = await supabase.from("tarjetas").select("*");
+      const usuarioId = localStorage.getItem("usuario_id");
+      const cuentaId = localStorage.getItem("cuenta_id");
+      if (!usuarioId) return;
+
+      const { data, error } = await supabase
+        .from("tarjetas")
+        .select("*")
+        .eq("usuario_id", usuarioId)
+        .eq("tipo", "Débito");
+
       if (error) {
         console.error("Error cargando tarjetas:", error);
         return;
@@ -30,9 +39,9 @@ export default function Tarjetas() {
       const { data: cuenta } = await supabase
         .from("cuentas")
         .select("saldo")
+        .eq("id", cuentaId)
         .single();
 
-      // Leer estado bloqueado desde localStorage como respaldo
       const bloqueosGuardados = JSON.parse(
         localStorage.getItem("tarjetas_bloqueadas") || "{}"
       );
@@ -40,8 +49,7 @@ export default function Tarjetas() {
       const tarjetasConSaldo = data.map((t) => ({
         ...t,
         bloqueada: bloqueosGuardados[t.id] ?? t.bloqueada ?? false,
-        saldoMostrar:
-          t.tipo === "Débito" ? cuenta?.saldo ?? 0 : t.limite ?? 0,
+        saldoMostrar: cuenta?.saldo ?? 0,
       }));
 
       setTarjetas(tarjetasConSaldo);
@@ -56,7 +64,6 @@ export default function Tarjetas() {
     const nuevoEstado = !estadoActual;
     setCargandoBloqueo((prev) => ({ ...prev, [id]: true }));
 
-    // Guardar en localStorage para que persista entre páginas
     const bloqueosGuardados = JSON.parse(
       localStorage.getItem("tarjetas_bloqueadas") || "{}"
     );
@@ -66,7 +73,6 @@ export default function Tarjetas() {
       JSON.stringify(bloqueosGuardados)
     );
 
-    // Guardar en Supabase también
     await supabase
       .from("tarjetas")
       .update({ bloqueada: nuevoEstado })
@@ -135,7 +141,6 @@ export default function Tarjetas() {
                   </div>
                 </div>
 
-                {/* Badge bloqueada */}
                 {estaBloqueada && (
                   <div className="absolute inset-0 flex items-center justify-center mb-4">
                     <span className="bg-red-600 text-white text-xs font-bold px-4 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
@@ -145,7 +150,6 @@ export default function Tarjetas() {
                 )}
               </div>
 
-              {/* Botones */}
               <div className="bg-white rounded-2xl p-4 shadow-sm flex gap-3">
                 <button
                   onClick={() => toggle(t.id)}
@@ -180,7 +184,6 @@ export default function Tarjetas() {
         })}
       </div>
 
-      {/* Límites y consumo */}
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <h2 className="text-lg font-bold text-gray-800 mb-5">
           Límites y consumo

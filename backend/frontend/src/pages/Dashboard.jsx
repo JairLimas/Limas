@@ -15,20 +15,30 @@ export default function Dashboard() {
   }, []);
 
   const cargarDatos = async () => {
+    const cuentaId = localStorage.getItem("cuenta_id");
+
+    if (!cuentaId) {
+      navigate("/");
+      return;
+    }
+
     const { data: cuentaData } = await supabase
       .from("cuentas")
       .select("*")
+      .eq("id", cuentaId)
       .single();
     setCuenta(cuentaData);
 
     const { data: todosData } = await supabase
       .from("movimientos")
-      .select("*");
+      .select("*")
+      .eq("cuenta_id", cuentaId);
     setTodos(todosData || []);
 
     const { data: movData } = await supabase
       .from("movimientos")
       .select("*")
+      .eq("cuenta_id", cuentaId)
       .order("fecha", { ascending: false })
       .limit(5);
     setMovimientos(movData || []);

@@ -21,7 +21,15 @@ export default function Prestamos() {
 
   useEffect(() => {
     const obtenerUsuario = async () => {
-      const { data } = await supabase.from("usuarios").select("id, nombre, dni").single();
+      const uid = localStorage.getItem("usuario_id");
+      if (!uid) return;
+
+      const { data } = await supabase
+        .from("usuarios")
+        .select("id, nombre, dni")
+        .eq("id", uid)
+        .single();
+
       if (data) {
         setUsuarioId(data.id);
         setSolicitud(prev => ({ ...prev, nombre: data.nombre, dni: data.dni }));
@@ -75,7 +83,6 @@ export default function Prestamos() {
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Préstamos</h1>
 
       <div className="grid grid-cols-2 gap-6 mb-6">
-        {/* Simulador */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -117,7 +124,6 @@ export default function Prestamos() {
           </div>
         </div>
 
-        {/* Resultado */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-6">Resumen</h2>
           {resultado ? (
@@ -147,7 +153,6 @@ export default function Prestamos() {
         </div>
       </div>
 
-      {/* Solicitar Préstamo */}
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
